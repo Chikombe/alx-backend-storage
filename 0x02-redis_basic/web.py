@@ -1,36 +1,33 @@
-#!/usr/bin/env python3
-import requests
-import time
-from functools import wraps
-from typing import Dict
-
-cache: Dict[str, str] = {}
-
-
-def get_page(url: str) -> str:
-    if url in cache:
-        print(f"Retrieving from cache: {url}")
-        return cache[url]
-    else:
-        print(f"Retrieving from web: {url}")
-        response = requests.get(url)
-        result = response.text
-        cache[url] = result
-        return result
-
-
 def cache_with_expiration(expiration: int):
+    """
+    Decorator to cache function results with expiration time.
+
+    Args:
+        expiration (int): Expiration time for cached results in seconds.
+
+    Returns:
+        function: Decorator function.
+    """
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             url = args[0]
-            key = f"count:{url}"
+            key = f"cache:{url}"
             if key in cache:
                 count, timestamp = cache[key]
                 if time.time() - timestamp > expiration:
+                    # Cache expired, remove the entry from cache
+                    del cache[key]
                     result = func(*args, **kwargs)
-                    cache[key] = (count+1, time.time())
+                    cache[key] = (result, time.time())  # Cache the new result
                     return result
                 else:
-                    cache[key] = (count+1, timestamp)
-                    return
+                    # Cache still valid, return cached result
+                    return cache[key][0]
+            else:
+                # URL not cached, fetch and cache the result
+                result = func(*args, **kwargs)
+                cache[key] = (result, time.time())
+                return result
+        return wrapper
+    return decorator
