@@ -2,32 +2,19 @@
 """
 Script that provides some stats about Nginx logs stored in MongoDB.
 """
-
 from pymongo import MongoClient
 
-def print_stats(logs_collection):
-    # Total number of logs
-    total_logs = logs_collection.count_documents({})
-    print(f"{total_logs} logs")
-
-    # Methods
-    methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
-    print("Methods:")
-    for method in methods:
-        count = logs_collection.count_documents({"method": method})
-        print(f"\tmethod {method}: {count}")
-
-    # Number of logs with method=GET and path=/status
-    status_check_count = logs_collection.count_documents({"method": "GET", "path": "/status"})
-    print(f"{status_check_count} status check")
 
 if __name__ == "__main__":
-    # Connect to MongoDB
-    client = MongoClient()
-    
-    # Specify the database and collection
-    db = client.logs
-    logs_collection = db.nginx
-    
-    # Print stats
-    print_stats(logs_collection)
+    client = MongoClient('mongodb://localhost:27017')
+    collec = client.logs.nginx
+
+    print(f'{collec.count_documents({})} logs')
+    print('Methods:')
+
+    print(f'\tmethod GET: {collec.count_documents({"method": "GET"})}')
+    print(f'\tmethod POST: {collec.count_documents({"method": "POST"})}')
+    print(f'\tmethod PUT: {collec.count_documents({"method": "PUT"})}')
+    print(f'\tmethod PATCH: {collec.count_documents({"method": "PATCH"})}')
+    print(f'\tmethod DELETE: {collec.count_documents({"method": "DELETE"})}')
+    print(f'{collec.count_documents({"path": "/status"})} status check')
